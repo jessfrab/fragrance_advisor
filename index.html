@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>All Yours · Beauty Advisor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { margin: 0; }
+  .font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+  * { font-family: 'Inter', sans-serif; }
+</style>
+</head>
+<body>
+<div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:serif;color:#A8543A;font-size:1.2rem;">All Yours · Beauty Advisor</div></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo } = React;
+
+function Icon({ d, size = 18, ...rest }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...rest}>
+      {d}
+    </svg>
+  );
+}
+const Heart = (p) => <Icon {...p} d={<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.5 4.04 3 5.5l7 7Z" />} />;
+const X = (p) => <Icon {...p} d={<><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>} />;
+const ChevronDown = (p) => <Icon {...p} d={<path d="m6 9 6 6 6-6" />} />;
+const Globe = (p) => <Icon {...p} d={<><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>} />;
+const Sparkles = (p) => <Icon {...p} d={<><path d="m12 3-1.9 4.8a2 2 0 0 1-1.1 1.1L4.2 11l4.8 1.9a2 2 0 0 1 1.1 1.1L12 19l1.9-4.8a2 2 0 0 1 1.1-1.1l4.8-1.9-4.8-1.9a2 2 0 0 1-1.1-1.1Z" /><path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" /></>} />;
+const SlidersHorizontal = (p) => <Icon {...p} d={<><line x1="21" x2="14" y1="4" y2="4" /><line x1="10" x2="3" y1="4" y2="4" /><line x1="21" x2="12" y1="12" y2="12" /><line x1="8" x2="3" y1="12" y2="12" /><line x1="21" x2="16" y1="20" y2="20" /><line x1="12" x2="3" y1="20" y2="20" /><line x1="14" x2="14" y1="2" y2="6" /><line x1="8" x2="8" y1="10" y2="14" /><line x1="16" x2="16" y1="18" y2="22" /></>} />;
+const Shuffle = (p) => <Icon {...p} d={<><path d="m18 14 4 4-4 4" /><path d="m18 2 4 4-4 4" /><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" /><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" /><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" /></>} />;
+const Droplet = (p) => <Icon {...p} d={<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.5-4 6C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />} />;
+const RotateCcw = (p) => <Icon {...p} d={<><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></>} />;
+
+const EMBEDDED_PERFUMES = [];
+const EMBEDDED_TRANSLATIONS = {"notes":{},"families":{},"descriptors":{},"daynight":{},"intensity":{},"season":{},"pyramid":{},"ui":{}};
+
+const DATA_URL = './perfumes_v4.json';
+const TRANSLATIONS_URL = './translations_v4.json';
+
+const LANGS = [
+  { code: 'pt', label: 'PT' },
+  { code: 'en', label: 'EN' },
+  { code: 'es', label: 'ES' },
+];
+
+const FAMILY_COLORS = {
+  citrus: '#D98E2B', floral: '#C97A93', woody: '#8B6A47', oriental: '#A8543A',
+  gourmand: '#BE8E5C', spicy: '#A8432B', fresh: '#5E9690', fruity: '#D87856',
+  green: '#748A60', aromatic: '#8AA07C', aquatic: '#5C87A0', musky: '#A99882',
+  smoky: '#6E625A', mineral: '#8C9AA0', leather: '#6B4423', amber: '#C9892F',
+  chypre: '#7D8466', powdery: '#B09478', fougere: '#6F8C6E',
+};
+
+const FAMILY_OPTIONS = [
+  'oriental', 'woody', 'floral', 'gourmand', 'spicy', 'citrus', 'fresh', 'musky',
+  'fruity', 'green', 'aromatic', 'leather', 'aquatic', 'amber', 'powdery', 'chypre', 'fougere',
+];
+
+const DESCRIPTOR_GROUPS = [
+  ['warm', 'cool'],
+  ['sweet', 'dry'],
+  ['white_floral', 'rosy', 'green_floral', 'powdery'],
+  ['dry_woods', 'creamy_woods'],
+  ['zesty_citrus', 'green_citrus'],
+];
+const DESCRIPTOR_OPTIONS = DESCRIPTOR_GROUPS.flat();
+
+const SEASON_OPTIONS = ['spring', 'summer', 'autumn', 'winter'];
+const PRICE_OPTIONS = [50, 100, 200];
+
+function familyColor(fam) {
+  return FAMILY_COLORS[fam] || '#9C9284';
+}
+
+function tr(dict, key, lang, fallback) {
+  if (!key) return fallback || '';
+  const entry = dict[key];
+  if (!entry) return fallback || key;
+  return entry[lang] || entry.en || key;
+}
+
+function shuffleArr(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function matchesFilters(p, filters) {
+  if (filters.familias.length && !p.familias.some((f) => filters.familias.includes(f))) return false;
+  if (filters.descritores.length && !filters.descritores.every((d) => p.descritores.includes(d))) return false;
+  if (filters.ingredientes.length && !filters.ingredientes.some((ing) => p.notas.includes(ing))) return false;
+  if (filters.estacao !== 'any' && !p.estacoes.includes(filters.estacao)) return false;
+  if (filters.diaNoite !== 'any') {
+    if (filters.diaNoite === 'day' && !(p.dia_noite === 'day' || p.dia_noite === 'day_and_night')) return false;
+    if (filters.diaNoite === 'night' && !(p.dia_noite === 'night' || p.dia_noite === 'day_and_night')) return false;
+  }
+  if (filters.intensidade !== 'any' && p.intensidade !== filters.intensidade) return false;
+  if (filters.marcas.length && !filters.marcas.includes(p.marca)) return false;
+  if (isFinite(filters.precoMax) && parseFloat(p.preco) > filters.precoMax) return false;
+  return true;
+}
+
+function pickDiverge(pool, n = 5) {
+  const groups = {};
+  pool.forEach((p) => {
+    const fam = p.familias[0] || 'other';
+    if (!groups[fam]) groups[fam] = [];
+    groups[fam].push(p);
+  });
+  let famKeys = shuffleArr(Object.keys(groups));
+  const result = [];
+  let guard = 0;
+  while (result.length < n && famKeys.length && guard < 500) {
+    const fam = famKeys[0];
+    const group = groups[fam];
+    const pick = group.splice(Math.floor(Math.random() * group.length), 1)[0];
+    result.push(pick);
+    if (group.length === 0) famKeys.shift();
+    else famKeys.push(famKeys.shift());
+    guard++;
+  }
+  return result;
+}
+
+function pickConverge(perfumes, liked, excludeIds, n = 5) {
+  const scoreMap = new Map();
+  liked.forEach((p) => {
+    (p.similares || []).forEach((simId, rank) => {
+      if (excludeIds.has(simId)) return;
+      scoreMap.set(simId, (scoreMap.get(simId) || 0) + (10 - rank));
+    });
+  });
+  const ranked = [...scoreMap.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
+  const byId = new Map(perfumes.map((p) => [p.id, p]));
+  return ranked.slice(0, n).map((id) => byId.get(id)).filter(Boolean);
+}
+
+function buildProfileSentence(T, p, lang) {
+  const allNotes = [...(p.notas || [])];
+  if (!p.familias.length && !allNotes.length) return tr(T.ui, 'non_conventional', lang);
+
+  if (!p.familias.length) {
+    // tem notas mas nenhuma família conhecida
+    const notes = allNotes.slice(0, 3).map((n) => tr(T.notes, n, lang).toLowerCase());
+    if (lang === 'pt') return `Notas de ${notes.join(', ')}.`;
+    if (lang === 'es') return `Notas de ${notes.join(', ')}.`;
+    return `Notes: ${notes.join(', ')}.`;
+  }
+
+  const fams = p.familias.slice(0, 2).map((f) => tr(T.families, f, lang).toLowerCase());
+  const notes = allNotes.slice(0, 3).map((n) => tr(T.notes, n, lang).toLowerCase());
+
+  let famText;
+  if (lang === 'pt') famText = fams.join(' e ');
+  else if (lang === 'es') famText = fams.join(' y ');
+  else famText = fams.join(' and ');
+
+  let sentence;
+  if (lang === 'pt') sentence = notes.length ? `Perfil ${famText}, com notas de ${notes.join(', ')}.` : `Perfil ${famText}.`;
+  else if (lang === 'es') sentence = notes.length ? `Perfil ${famText}, con notas de ${notes.join(', ')}.` : `Perfil ${famText}.`;
+  else sentence = notes.length
+    ? `${famText.charAt(0).toUpperCase() + famText.slice(1)} profile with ${notes.join(', ')}.`
+    : `${famText.charAt(0).toUpperCase() + famText.slice(1)} profile.`;
+
+  const parts = [sentence];
+  if (p.dia_noite) parts.push(tr(T.daynight, p.dia_noite, lang) + '.');
+  if (p.intensidade) {
+    const intLabel = tr(T.intensity, p.intensidade, lang);
+    if (lang === 'pt') parts.push(`Intensidade ${intLabel.toLowerCase()}.`);
+    else if (lang === 'es') parts.push(`Intensidad ${intLabel.toLowerCase()}.`);
+    else parts.push(`${intLabel} intensity.`);
+  }
+  return parts.join(' ');
+}
+
+/* ---------------------------------------------------------------------- */
+/* UI primitives                                                           */
+/* ---------------------------------------------------------------------- */
+
+function Chip({ active, onClick, children, color }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors whitespace-nowrap"
+      style={{
+        borderColor: active ? 'transparent' : '#E4E1DC',
+        backgroundColor: active ? (color || '#1F1B18') : '#FFFFFF',
+        color: active ? '#FFFFFF' : '#5C5249',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function RemovableChip({ label, onRemove }) {
+  return (
+    <span className="flex items-center gap-1 pl-3 pr-1.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: '#1F1B18', color: '#FFFFFF' }}>
+      {label}
+      <button onClick={onRemove} className="rounded-full p-0.5" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+        <X size={10} />
+      </button>
+    </span>
+  );
+}
+
+function SegmentedControl({ options, value, onChange }) {
+  return (
+    <div className="flex gap-1.5 flex-wrap">
+      {options.map((opt) => (
+        <Chip key={String(opt.value)} active={value === opt.value} onClick={() => onChange(opt.value)}>
+          {opt.label}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+
+function MultiSelectDropdown({ options, selected, onToggle, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const filtered = options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()));
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between rounded-2xl border px-3 py-2.5 text-sm text-left"
+        style={{ borderColor: '#E4E1DC', backgroundColor: '#FFFFFF', color: selected.length ? '#1F1B18' : '#A39C92' }}
+      >
+        <span className="truncate">
+          {selected.length === 0 ? placeholder : selected.map((s) => options.find((o) => o.key === s)?.label || s).join(', ')}
+        </span>
+        <ChevronDown size={16} style={{ color: '#A39C92' }} />
+      </button>
+
+      {open && (
+        <div className="absolute z-20 mt-1 w-full rounded-2xl border shadow-xl" style={{ borderColor: '#E4E1DC', backgroundColor: '#FFFFFF', maxHeight: '240px', overflowY: 'auto' }}>
+          <div className="p-2 sticky top-0" style={{ backgroundColor: '#FFFFFF' }}>
+            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="..."
+              className="w-full rounded-lg border px-2 py-1 text-sm" style={{ borderColor: '#E4E1DC' }} />
+          </div>
+          {filtered.map((o) => (
+            <label key={o.key} className="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer" style={{ color: '#1F1B18' }}>
+              <input type="checkbox" checked={selected.includes(o.key)} onChange={() => onToggle(o.key)} />
+              {o.label}
+            </label>
+          ))}
+          {filtered.length === 0 && <p className="px-3 py-2 text-sm" style={{ color: '#A39C92' }}>—</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Perfume card                                                            */
+/* ---------------------------------------------------------------------- */
+
+function PyramidRow({ label, notes, color }) {
+  if (!notes || notes.length === 0) return null;
+  return (
+    <div className="flex items-baseline gap-2 text-xs">
+      <span className="font-semibold uppercase tracking-wide" style={{ color, minWidth: '76px' }}>{label}</span>
+      <span style={{ color: '#8A8178' }}>{notes.join(', ')}</span>
+    </div>
+  );
+}
+
+function PerfumeCard({ perfume, liked, onToggleLike, accentColor, lang, T }) {
+  const hasPyramid = (perfume.piramide.top?.length || perfume.piramide.heart?.length || perfume.piramide.base?.length);
+  const semPosicao = perfume.notas_sem_posicao || [];
+  const flatNotes = !hasPyramid && semPosicao.length ? semPosicao.map((n) => tr(T.notes, n, lang)) : null;
+
+  const inspiracaoText = lang === 'es' ? (perfume.inspiracao_es || perfume.inspiracao)
+    : lang === 'pt' ? (perfume.inspiracao_pt || perfume.inspiracao)
+    : perfume.inspiracao;
+
+  return (
+    <div className="rounded-3xl overflow-hidden flex flex-col" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 1px 3px rgba(31,27,24,0.06), 0 8px 24px -8px rgba(31,27,24,0.08)' }}>
+      <div className="w-full aspect-[16/9] flex items-center justify-center relative" style={{ backgroundColor: '#EFEBE4' }}>
+        {perfume.imagem ? (
+          <img src={perfume.imagem} alt={perfume.nome} className="w-full h-full object-cover" />
+        ) : (
+          <Droplet size={32} style={{ color: '#D6CFC4' }} />
+        )}
+        <button
+          onClick={() => onToggleLike(perfume.id)}
+          className="absolute top-3 right-3 flex items-center justify-center w-9 h-9 rounded-full"
+          style={{ backgroundColor: liked ? accentColor : 'rgba(255,255,255,0.9)' }}
+        >
+          <Heart size={16} fill={liked ? '#FFFFFF' : 'none'} style={{ color: liked ? '#FFFFFF' : '#1F1B18' }} />
+        </button>
+        <span className="absolute bottom-3 left-3 font-display text-sm px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.92)', color: '#1F1B18' }}>
+          € {parseFloat(perfume.preco).toFixed(0)}
+        </span>
+      </div>
+
+      <div className="p-4 flex flex-col gap-2">
+        <div>
+          <p className="text-[11px] uppercase tracking-widest font-semibold" style={{ color: '#A8543A' }}>{perfume.marca}</p>
+          <h3 className="font-display text-xl leading-tight" style={{ color: '#1F1B18' }}>{perfume.nome}</h3>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {perfume.familias.slice(0, 2).map((f) => (
+            <span key={f} className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: familyColor(f) + '1A', color: familyColor(f) }}>
+              {tr(T.families, f, lang)}
+            </span>
+          ))}
+          {perfume.descritores.slice(0, 2).map((d) => (
+            <span key={d} className="text-xs font-medium px-2 py-0.5 rounded-full border" style={{ borderColor: '#E4E1DC', color: '#A39C92' }}>
+              {tr(T.descriptors, d, lang)}
+            </span>
+          ))}
+          {perfume.dia_noite && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F4F1EC', color: '#8A8178' }}>{tr(T.daynight, perfume.dia_noite, lang)}</span>
+          )}
+          {perfume.intensidade && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: '#F4F1EC', color: '#8A8178' }}>{tr(T.intensity, perfume.intensidade, lang)}</span>
+          )}
+        </div>
+
+        <p className="text-sm leading-snug" style={{ color: '#5C5249' }}>{buildProfileSentence(T, perfume, lang)}</p>
+
+        {hasPyramid && (
+          <div className="flex flex-col gap-0.5 pt-2 border-t" style={{ borderColor: '#F1EDE6' }}>
+            <PyramidRow label={tr(T.pyramid, 'top', lang)} notes={perfume.piramide.top.map((n) => tr(T.notes, n, lang))} color="#B97A4E" />
+            <PyramidRow label={tr(T.pyramid, 'heart', lang)} notes={perfume.piramide.heart.map((n) => tr(T.notes, n, lang))} color="#A8543A" />
+            <PyramidRow label={tr(T.pyramid, 'base', lang)} notes={perfume.piramide.base.map((n) => tr(T.notes, n, lang))} color="#7A5238" />
+          </div>
+        )}
+        {!hasPyramid && flatNotes && (
+          <div className="pt-2 border-t text-xs" style={{ borderColor: '#F1EDE6', color: '#8A8178' }}>
+            <span className="font-semibold uppercase tracking-wide" style={{ fontSize: '10px' }}>{tr(T.ui, 'notes_label', lang)}: </span>
+            {flatNotes.join(', ')}
+          </div>
+        )}
+
+        {perfume.notas_extra && perfume.notas_extra.length > 0 && (
+          <div className="text-xs" style={{ color: '#A39C92' }}>
+            <span className="font-semibold uppercase tracking-wide" style={{ fontSize: '10px' }}>{tr(T.ui, 'additional_notes', lang)}: </span>
+            {perfume.notas_extra.join(', ')}
+          </div>
+        )}
+
+        {inspiracaoText && (
+          <p className="text-xs italic pt-1 border-t" style={{ borderColor: '#F1EDE6', color: '#8A8178' }}>
+            <span className="font-semibold not-italic uppercase tracking-wide" style={{ fontSize: '10px' }}>{tr(T.ui, 'inspiration', lang)}: </span>
+            {inspiracaoText}
+          </p>
+        )}
+
+        {(perfume.concentracion || perfume.duracao_pct != null || perfume.proyeccion_pct != null) && (
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs pt-1" style={{ color: '#8A8178' }}>
+            {perfume.concentracion && (
+              <span><span className="font-semibold uppercase tracking-wide" style={{ fontSize: '10px' }}>{tr(T.ui, 'concentration_label', lang)}: </span>{perfume.concentracion}</span>
+            )}
+            {perfume.duracao_pct != null && (
+              <span><span className="font-semibold uppercase tracking-wide" style={{ fontSize: '10px' }}>{tr(T.ui, 'duration_label', lang)}: </span>{perfume.duracao_pct}%</span>
+            )}
+            {perfume.proyeccion_pct != null && (
+              <span><span className="font-semibold uppercase tracking-wide" style={{ fontSize: '10px' }}>{tr(T.ui, 'projection_label', lang)}: </span>{perfume.proyeccion_pct}%</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* Filter sheet                                                            */
+/* ---------------------------------------------------------------------- */
+
+function FilterSheet({ open, onClose, filters, setFilters, toggleInArray, sortedNotes, pool, onApply, lang, t, T, perfumes }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-30 flex items-end justify-center" style={{ backgroundColor: 'rgba(31,27,24,0.4)' }} onClick={onClose}>
+      <div
+        className="w-full max-w-2xl rounded-t-3xl flex flex-col"
+        style={{ backgroundColor: '#FBFAF8', maxHeight: '88vh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <h2 className="font-display text-xl" style={{ color: '#1F1B18' }}>{t(T.ui, 'olfactory_family')}</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#F1EDE6' }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto px-5 pb-4 flex flex-col gap-5">
+          <div>
+            <p className="text-sm font-semibold mb-2" style={{ color: '#1F1B18' }}>
+              {t(T.ui, 'olfactory_family')} <span className="font-normal" style={{ color: '#A39C92' }}>{t(T.ui, 'select_multiple')}</span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {FAMILY_OPTIONS.map((fam) => (
+                <Chip key={fam} active={filters.familias.includes(fam)} onClick={() => toggleInArray('familias', fam)} color={familyColor(fam)}>
+                  {t(T.families, fam)}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold mb-1" style={{ color: '#1F1B18' }}>
+              {t(T.ui, 'characteristics_label')} <span className="font-normal" style={{ color: '#A39C92' }}>{t(T.ui, 'select_multiple')}</span>
+            </p>
+            <p className="text-xs mb-2" style={{ color: '#A39C92' }}>{t(T.ui, 'descriptors_note')}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {DESCRIPTOR_OPTIONS.map((d) => (
+                <Chip key={d} active={filters.descritores.includes(d)} onClick={() => toggleInArray('descritores', d)}>
+                  {t(T.descriptors, d)}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold mb-2" style={{ color: '#1F1B18' }}>
+              {t(T.ui, 'ingredient')} <span className="font-normal" style={{ color: '#A39C92' }}>{t(T.ui, 'select_multiple')}</span>
+            </p>
+            <MultiSelectDropdown options={sortedNotes.map((n) => ({ key: n.key, label: n.label }))} selected={filters.ingredientes} onToggle={(k) => toggleInArray('ingredientes', k)} placeholder={t(T.ui, 'ingredient_placeholder')} />
+          </div>
+
+          {/* Uso (dia/noite) e Intensidade removidos temporariamente — aguardando
+              dados oficiais de Ocasión/Duración/Proyección do site */}
+
+          <div>
+            <p className="text-sm font-semibold mb-1" style={{ color: '#1F1B18' }}>{t(T.ui, 'season')}</p>
+            <p className="text-xs mb-2" style={{ color: '#A39C92' }}>{t(T.ui, 'season_note')}</p>
+            <SegmentedControl value={filters.estacao} onChange={(v) => setFilters((f) => ({ ...f, estacao: v }))}
+              options={[{ value: 'any', label: t(T.ui, 'any') }, ...SEASON_OPTIONS.map((s) => ({ value: s, label: t(T.season, s) }))]} />
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold mb-2" style={{ color: '#1F1B18' }}>{t(T.ui, 'price_range')}</p>
+            <SegmentedControl value={filters.precoMax} onChange={(v) => setFilters((f) => ({ ...f, precoMax: v }))}
+              options={[{ value: Infinity, label: t(T.ui, 'any_price') }, ...PRICE_OPTIONS.map((v) => ({ value: v, label: `${t(T.ui, 'up_to')} €${v}` }))]} />
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold mb-2" style={{ color: '#1F1B18' }}>
+              {t(T.ui, 'brand')} <span className="font-normal" style={{ color: '#A39C92' }}>{t(T.ui, 'select_multiple')}</span>
+            </p>
+            <MultiSelectDropdown options={[...new Set(perfumes.map((p) => p.marca))].sort().map((b) => ({ key: b, label: b }))} selected={filters.marcas} onToggle={(k) => toggleInArray('marcas', k)} placeholder={t(T.ui, 'all_brands')} />
+          </div>
+        </div>
+
+        <div className="px-5 py-4 border-t" style={{ borderColor: '#F1EDE6' }}>
+          <button onClick={onApply} className="w-full flex items-center justify-center gap-2 rounded-full py-3 font-display text-lg font-semibold" style={{ backgroundColor: '#1F1B18', color: '#FFFFFF' }}>
+            <Sparkles size={18} />
+            {t(T.ui, 'generate_button')} · {pool.length}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------- */
+/* App                                                                     */
+/* ---------------------------------------------------------------------- */
+
+function App() {
+  const [perfumes, setPerfumes] = useState(EMBEDDED_PERFUMES);
+  const [T, setT] = useState(EMBEDDED_TRANSLATIONS);
+  const [dataSource, setDataSource] = useState('embedded'); // 'embedded' | 'live' | 'loading'
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setDataSource('loading');
+
+    Promise.all([
+      fetch(DATA_URL, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : Promise.reject(r.status))),
+      fetch(TRANSLATIONS_URL, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : Promise.reject(r.status))),
+    ])
+      .then(([liveData, liveTranslations]) => {
+        if (cancelled) return;
+        setPerfumes(liveData);
+        setT(liveTranslations);
+        setDataSource('live');
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDataSource('embedded');
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  const [lang, setLang] = useState('es');
+  const [filters, setFilters] = useState({
+    familias: [], descritores: [], ingredientes: [], estacao: 'any',
+    diaNoite: 'any', intensidade: 'any', marcas: [], precoMax: Infinity,
+  });
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [tab, setTab] = useState('criteria'); // criteria | results | liked
+  const [divergeSet, setDivergeSet] = useState([]);
+  const [convergeSet, setConvergeSet] = useState([]);
+  const [likedIds, setLikedIds] = useState(new Set());
+
+  const pool = useMemo(() => perfumes.filter((p) => matchesFilters(p, filters)), [perfumes, filters]);
+
+  const allNotesPresent = useMemo(() => [...new Set(perfumes.flatMap((p) => p.notas))], [perfumes]);
+
+  const sortedNotes = useMemo(() => {
+    return allNotesPresent.map((n) => ({ key: n, label: tr(T.notes, n, lang) })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [allNotesPresent, T, lang]);
+
+  const t = (dict, key) => tr(dict, key, lang);
+
+  const toggleInArray = (field, value) => {
+    setFilters((f) => ({ ...f, [field]: f[field].includes(value) ? f[field].filter((x) => x !== value) : [...f[field], value] }));
+  };
+
+  const removeFilter = (field, value) => {
+    if (Array.isArray(filters[field])) toggleInArray(field, value);
+    else setFilters((f) => ({ ...f, [field]: field === 'precoMax' ? Infinity : 'any' }));
+  };
+
+  const applyFilters = () => {
+    setDivergeSet(pickDiverge(pool, 5));
+    setConvergeSet([]);
+    setLikedIds(new Set());
+    setSheetOpen(false);
+    setTab('results');
+  };
+
+  const reshuffle = () => setDivergeSet(pickDiverge(pool, 5));
+
+  const toggleLike = (id) => {
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const seeConverge = () => {
+    const likedPerfumes = perfumes.filter((p) => likedIds.has(p.id));
+    const exclude = new Set([...likedIds, ...divergeSet.map((p) => p.id)]);
+    setConvergeSet(pickConverge(perfumes, likedPerfumes, exclude, 5));
+  };
+
+  // active filter chips
+  const activeChips = [];
+  filters.familias.forEach((f) => activeChips.push({ field: 'familias', value: f, label: t(T.families, f) }));
+  filters.descritores.forEach((d) => activeChips.push({ field: 'descritores', value: d, label: t(T.descriptors, d) }));
+  filters.ingredientes.forEach((i) => activeChips.push({ field: 'ingredientes', value: i, label: tr(T.notes, i, lang) }));
+  filters.marcas.forEach((m) => activeChips.push({ field: 'marcas', value: m, label: m }));
+  if (filters.diaNoite !== 'any') activeChips.push({ field: 'diaNoite', value: filters.diaNoite, label: t(T.daynight, filters.diaNoite) });
+  if (filters.intensidade !== 'any') activeChips.push({ field: 'intensidade', value: filters.intensidade, label: t(T.intensity, filters.intensidade) });
+  if (filters.estacao !== 'any') activeChips.push({ field: 'estacao', value: filters.estacao, label: t(T.season, filters.estacao) });
+  if (isFinite(filters.precoMax)) activeChips.push({ field: 'precoMax', value: filters.precoMax, label: `${t(T.ui, 'up_to')} €${filters.precoMax}` });
+
+  const likedPerfumes = perfumes.filter((p) => likedIds.has(p.id));
+
+  return (
+    <div className="min-h-screen w-full flex justify-center" style={{ backgroundColor: '#F2F0EC', fontFamily: "'Inter', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+        .font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+      `}</style>
+
+      <div className="w-full max-w-2xl pb-24 relative">
+        {/* Header */}
+        <div className="px-4 pt-5 pb-2 flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: '#A8543A' }}>All Yours · Beauty Advisor</p>
+            <h1 className="font-display text-2xl" style={{ color: '#1F1B18' }}>{t(T.ui, 'app_title')}</h1>
+          </div>
+          <div className="flex items-center gap-1">
+            <span
+              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+              style={{
+                backgroundColor: dataSource === 'live' ? '#E8EFE2' : '#F1EDE6',
+                color: dataSource === 'live' ? '#5C7A4A' : '#A39C92',
+              }}
+              title={dataSource === 'live' ? 'Dados carregados de perfumes_v4.json' : 'Usando dados embutidos no arquivo'}
+            >
+              {dataSource === 'live' ? '● online' : dataSource === 'loading' ? '… ' : '○ local'}
+            </span>
+            <Globe size={14} style={{ color: '#A39C92' }} />
+            {LANGS.map((l) => (
+              <button key={l.code} onClick={() => setLang(l.code)} className="text-xs font-semibold px-2 py-1 rounded-full"
+                style={{ backgroundColor: lang === l.code ? '#1F1B18' : 'transparent', color: lang === l.code ? '#FFFFFF' : '#A39C92' }}>
+                {l.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Search / filter bar */}
+        <div className="px-4 pt-2">
+          <button onClick={() => setSheetOpen(true)} className="w-full flex items-center gap-2 rounded-2xl px-4 py-3" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 1px 2px rgba(31,27,24,0.05)' }}>
+            <SlidersHorizontal size={16} style={{ color: '#A8543A' }} />
+            <span className="text-sm flex-1 text-left" style={{ color: '#A39C92' }}>
+              {activeChips.length === 0 ? t(T.ui, 'intro_text') : `${pool.length} ${t(T.ui, 'matches_count')}`}
+            </span>
+          </button>
+        </div>
+
+        {/* Active filter chips */}
+        {activeChips.length > 0 && (
+          <div className="px-4 pt-3 flex flex-wrap gap-1.5">
+            {activeChips.map((c, idx) => (
+              <RemovableChip key={idx} label={c.label} onRemove={() => removeFilter(c.field, c.value)} />
+            ))}
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="px-4 pt-4 flex flex-col gap-4">
+          {tab === 'criteria' && (
+            <div className="flex flex-col items-center text-center gap-3 py-12">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFFFFF' }}>
+                <Sparkles size={24} style={{ color: '#A8543A' }} />
+              </div>
+              <p className="text-sm max-w-xs" style={{ color: '#8A8178' }}>{t(T.ui, 'intro_text')}</p>
+              <button onClick={() => setSheetOpen(true)} className="rounded-full px-5 py-2.5 font-display text-base font-semibold" style={{ backgroundColor: '#1F1B18', color: '#FFFFFF' }}>
+                {t(T.ui, 'olfactory_family')}
+              </button>
+            </div>
+          )}
+
+          {tab === 'results' && (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-xl" style={{ color: '#1F1B18' }}>{t(T.ui, 'first_selection_title')}</h2>
+                <button onClick={reshuffle} className="flex items-center gap-1 text-sm font-medium" style={{ color: '#8A8178' }}>
+                  <Shuffle size={14} /> {t(T.ui, 'other_options')}
+                </button>
+              </div>
+              <p className="text-sm -mt-2" style={{ color: '#8A8178' }}>{t(T.ui, 'first_selection_subtitle')}</p>
+
+              <div className="flex flex-col gap-3">
+                {divergeSet.map((p) => (
+                  <PerfumeCard key={p.id} perfume={p} liked={likedIds.has(p.id)} onToggleLike={toggleLike} accentColor="#A8543A" lang={lang} T={T} />
+                ))}
+                {divergeSet.length === 0 && <p className="text-sm" style={{ color: '#A39C92' }}>{t(T.ui, 'none_found')}</p>}
+              </div>
+
+              {likedIds.size > 0 && convergeSet.length === 0 && (
+                <button onClick={seeConverge} className="w-full flex items-center justify-center gap-2 rounded-full py-3 font-display text-lg font-semibold" style={{ backgroundColor: '#748A60', color: '#FFFFFF' }}>
+                  <Sparkles size={18} />
+                  {t(T.ui, 'see_similar')} ({likedIds.size} {t(T.ui, 'marked')})
+                </button>
+              )}
+
+              {convergeSet.length > 0 && (
+                <>
+                  <div className="pt-2">
+                    <h2 className="font-display text-xl mb-1" style={{ color: '#1F1B18' }}>{t(T.ui, 'converge_title')}</h2>
+                    <p className="text-sm mb-2" style={{ color: '#8A8178' }}>
+                      {t(T.ui, 'based_on')} {likedPerfumes.map((p) => p.nome).join(', ')}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {convergeSet.map((p) => (
+                      <PerfumeCard key={p.id} perfume={p} liked={likedIds.has(p.id)} onToggleLike={toggleLike} accentColor="#748A60" lang={lang} T={T} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {tab === 'liked' && (
+            <>
+              <h2 className="font-display text-xl" style={{ color: '#1F1B18' }}>{t(T.ui, 'customer_liked')}</h2>
+              {likedPerfumes.length === 0 ? (
+                <p className="text-sm" style={{ color: '#A39C92' }}>—</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {likedPerfumes.map((p) => (
+                    <PerfumeCard key={p.id} perfume={p} liked={true} onToggleLike={toggleLike} accentColor="#748A60" lang={lang} T={T} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Bottom nav */}
+        <div className="fixed bottom-0 left-0 right-0 flex justify-center pointer-events-none">
+          <div className="w-full max-w-2xl pointer-events-auto px-4 pb-4">
+            <div className="flex items-center justify-around rounded-full px-2 py-2" style={{ backgroundColor: '#FFFFFF', boxShadow: '0 4px 20px rgba(31,27,24,0.12)' }}>
+              {[
+                { key: 'criteria', icon: SlidersHorizontal, label: t(T.ui, 'adjust_criteria') },
+                { key: 'results', icon: Sparkles, label: t(T.ui, 'first_selection_title') },
+                { key: 'liked', icon: Heart, label: t(T.ui, 'customer_liked') },
+              ].map((item) => {
+                const Icon = item.icon;
+                const active = tab === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => setTab(item.key)}
+                    className="flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-full flex-1"
+                    style={{ backgroundColor: active ? '#F4F1EC' : 'transparent', color: active ? '#A8543A' : '#A39C92' }}
+                  >
+                    <Icon size={18} fill={item.key === 'liked' && likedIds.size > 0 ? 'currentColor' : 'none'} />
+                    <span className="text-[10px] font-semibold truncate max-w-[80px]">{item.label}</span>
+                    {item.key === 'liked' && likedIds.size > 0 && (
+                      <span className="absolute -top-0.5 right-3 w-2 h-2 rounded-full" style={{ backgroundColor: '#A8543A' }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <FilterSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          filters={filters}
+          setFilters={setFilters}
+          toggleInArray={toggleInArray}
+          sortedNotes={sortedNotes}
+          pool={pool}
+          onApply={applyFilters}
+          lang={lang}
+          t={t}
+          T={T}
+          perfumes={perfumes}
+        />
+      </div>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
